@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 )
 
 const (
@@ -18,9 +17,6 @@ const (
 	RSA1024 = 1024
 	RSA2048 = 2048
 )
-
-// FIXME 非开发时,debug 设置为 false
-var debug = false
 
 type ARCrypto struct {
 	PublicKey  *rsa.PublicKey
@@ -68,7 +64,6 @@ func (ar *ARCrypto) checkRSAKeySize() (err error) {
 // 返回:
 // cipherData 密文,密文数据结构:
 // [数字签名][AES密钥密文][密文]
-
 func (ar *ARCrypto) Encrypt(plain []byte) (finalCipher []byte, err error) {
 
 	var cipherData, cipherKey, sig []byte
@@ -82,27 +77,15 @@ func (ar *ARCrypto) Encrypt(plain []byte) (finalCipher []byte, err error) {
 		return
 	}
 
-	if debug {
-		log.Println("aesKey: ", aesKey, len(aesKey))
-	}
-
 	// 用 AES 随机密码加密数据
 	if cipherData, err = AESEncrypt(aesKey, plain); err != nil {
 		return
-	}
-
-	if debug {
-		log.Println("aes cipherData: ", cipherData, err)
 	}
 
 	// 用公钥加密 AES 随机密码,密文长度与公钥长度有关
 	// AES密钥密文长度 = 证书公钥长度 / 8,如  RSA 公钥1024 位长度，则加密结果长度是 128
 	if cipherKey, err = RSAEncryptPKCS1v15(ar.PublicKey, aesKey); err != nil {
 		return
-	}
-
-	if debug {
-		log.Println("aes cipherKey: ", cipherKey, err)
 	}
 
 	// 用私钥对 随机密码密文+数据密文 进行签名,签名长度 =
@@ -120,13 +103,6 @@ func (ar *ARCrypto) Encrypt(plain []byte) (finalCipher []byte, err error) {
 	finalCipher = append(finalCipher, cipherKey...)  // AES密钥密文
 	finalCipher = append(finalCipher, cipherData...) // 密文
 
-	if debug {
-		log.Println("加密=======================================")
-		log.Println("AES 密文:", cipherData, len(cipherData))
-		log.Println("AES KEY 密文:", cipherKey, len(cipherKey))
-		log.Println("用于签名的数据: ", sigData, len(sigData))
-		log.Println("密文签名: ", sig, len(sig))
-	}
 	return
 }
 
@@ -146,7 +122,7 @@ func (ar *ARCrypto) Decrypt(data []byte) (plain []byte, err error) {
 	sigLen := ar.PrivateKey.N.BitLen() / 8
 	cipherKeyLen := ar.PublicKey.N.BitLen() / 8
 
-	// 如果计算得到签名长度和AES密钥长度比密文长度大,密文肯定是非法大
+	// 如果计算得到签名长度和AES密钥长度比密文长度大,密文肯定是非法
 	if sigLen+cipherKeyLen >= len(data) {
 		err = errors.New("CipherData error.")
 		return
@@ -173,14 +149,6 @@ func (ar *ARCrypto) Decrypt(data []byte) (plain []byte, err error) {
 		return
 	}
 
-	if debug {
-		log.Println("解密=======================================")
-		log.Println("密文签名: ", sig, len(sig))
-		log.Println("用于签名的数据: ", sigData, len(sigData))
-		log.Println("AES KEY 密文:", cipherKey, len(cipherKey))
-		log.Println("AES 密文: ", cipherData, len(cipherData))
-	}
-
 	return
 }
 
@@ -195,7 +163,6 @@ func (ar *ARCrypto) EncryptToString(plain []byte) (finalCipher string, err error
 }
 
 // 以 Bas64 字符串作为输入的解密
-
 func (ar *ARCrypto) DecryptString(dataB64 string) (plain []byte, err error) {
 	var data []byte
 	if data, err = base64.StdEncoding.DecodeString(dataB64); err != nil {
