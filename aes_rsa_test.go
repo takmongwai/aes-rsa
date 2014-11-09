@@ -3,6 +3,7 @@ package crypto
 import (
 	"log"
 	"testing"
+	"time"
 )
 
 var plain = []byte(`>>>I need to validate a google id_token and one step involves to check the token signature.<<<`)
@@ -83,32 +84,39 @@ func TestAREncrypt(t *testing.T) {
 
 	ar := NewArCrypto(publicKey, privateKey)
 
-	en, err := ar.Encrypt(plain)
+	count := 10
+	s := time.Now()
+	for i := 0; i < count; i++ {
 
-	if err != nil {
-		t.Fatal(err)
+		en, err := ar.Encrypt(plain)
+
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		pn, err := ar.Decrypt(en)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if string(plain) != string(pn) {
+			t.Fatal("解密结果与明文不符")
+		}
 	}
 
-	pn, err := ar.Decrypt(en)
-	if err != nil {
-		t.Fatal(err)
-	}
+	log.Printf("测试 %d 次加密/解密,耗时: %s \n", count, time.Now().Sub(s))
 
-	if string(plain) != string(pn) {
-		t.Fatal("解密结果与明文不符")
-	}
-
-	en64, err := ar.EncryptToString(plain)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-	log.Println("加密密文:", en64)
-
-	p64p, err := ar.DecryptString(en64)
-	if err != nil {
-		t.Fatal(err)
-	}
-	log.Println("解密明文:", string(p64p))
+	// en64, err := ar.EncryptToString(plain)
+//
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	log.Println("加密密文:", en64)
+//
+// 	p64p, err := ar.DecryptString(en64)
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	log.Println("解密明文:", string(p64p))
 
 }

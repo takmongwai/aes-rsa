@@ -66,43 +66,55 @@ func (ar *ARCrypto) checkRSAKeySize() (err error) {
 // [数字签名][AES密钥密文][密文]
 func (ar *ARCrypto) Encrypt(plain []byte) (finalCipher []byte, err error) {
 
+	var chanCount = 2
+	var errCh = make(chan error, chanCount) //用于同时生成密文和加密密钥
+
 	var cipherData, cipherKey, sig []byte
 	if err = ar.checkRSAKeySize(); err != nil {
 		return
 	}
-
 	// 生成随机 AES 密码
 	aesKey := make([]byte, AES128)
 	if _, err = io.ReadFull(rand.Reader, aesKey); err != nil {
 		return
 	}
-
 	// 用 AES 随机密码加密数据
-	if cipherData, err = AESEncrypt(aesKey, plain); err != nil {
-		return
-	}
+	go func() {
+		if cipherData, err = AESEncrypt(aesKey, plain); err != nil {
+			errCh <- err
+		}
+		errCh <- nil
+	}()
 
 	// 用公钥加密 AES 随机密码,密文长度与公钥长度有关
 	// AES密钥密文长度 = 证书公钥长度 / 8,如  RSA 公钥1024 位长度，则加密结果长度是 128
-	if cipherKey, err = RSAEncryptPKCS1v15(ar.PublicKey, aesKey); err != nil {
-		return
+	go func() {
+		if cipherKey, err = RSAEncryptPKCS1v15(ar.PublicKey, aesKey); err != nil {
+			errCh <- err
+		}
+		errCh <- nil
+	}()
+
+	// 如果 AES 加密和密钥加密都没有错误
+	for i := 0; i < chanCount; i++ {
+		err = <-errCh
+		if err != nil {
+			return
+		}
 	}
 
 	// 用私钥对 随机密码密文+数据密文 进行签名,签名长度 =
 	var sigData []byte
 	sigData = append(sigData, cipherKey...)
 	sigData = append(sigData, cipherData...)
-
 	// 对  cipherKey + cipherData 做数字签名,防止篡改
 	if sig, err = RSASignPKCS1v15(ar.PrivateKey, sigData); err != nil {
 		return
 	}
-
 	// 最终要返回对密文:
 	finalCipher = append(finalCipher, sig...)        // 数字签名
 	finalCipher = append(finalCipher, cipherKey...)  // AES密钥密文
 	finalCipher = append(finalCipher, cipherData...) // 密文
-
 	return
 }
 
