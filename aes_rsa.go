@@ -80,19 +80,15 @@ func (ar *ARCrypto) Encrypt(plain []byte) (finalCipher []byte, err error) {
 	}
 	// 用 AES 随机密码加密数据
 	go func() {
-		if cipherData, err = AESEncrypt(aesKey, plain); err != nil {
-			errCh <- err
-		}
-		errCh <- nil
+		cipherData, err = AESEncrypt(aesKey, plain)
+		errCh <- err
 	}()
 
 	// 用公钥加密 AES 随机密码,密文长度与公钥长度有关
 	// AES密钥密文长度 = 证书公钥长度 / 8,如  RSA 公钥1024 位长度，则加密结果长度是 128
 	go func() {
-		if cipherKey, err = RSAEncryptPKCS1v15(ar.PublicKey, aesKey); err != nil {
-			errCh <- err
-		}
-		errCh <- nil
+		cipherKey, err = RSAEncryptPKCS1v15(ar.PublicKey, aesKey)
+		errCh <- err
 	}()
 
 	// 如果 AES 加密和密钥加密都没有错误
