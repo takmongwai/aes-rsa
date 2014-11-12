@@ -44,7 +44,7 @@ func GenRSAKeyPem(keyLen int) (string, string, error) {
 
 	privateKeyPem := string(pem.EncodeToMemory(&privateKeyBlock))
 
-	publicKeyDer, err := x509.MarshalPKIXPublicKey(&publicKey)
+	publicKeyDer, err := x509.MarshalPKIXPublicKey(publicKey)
 	if err != nil {
 		return "", "", err
 	}
