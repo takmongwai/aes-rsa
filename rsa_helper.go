@@ -6,6 +6,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"fmt"
 )
 
 // 生成 RSA 密钥对
@@ -24,6 +25,32 @@ func GenRSAKey(keyLen int) (*rsa.PublicKey, *rsa.PrivateKey, error) {
 
 	publicKey := privateKey.PublicKey
 	return &publicKey, privateKey, nil
+}
+
+// 从 publicKey,private Pem 中还原密钥
+func ParseRSAKeyFromPem(pubByte, privByte []byte) (*rsa.PublicKey, *rsa.PrivateKey, error) {
+
+	block, _ := pem.Decode(pubByte)
+	pub, err := x509.ParsePKIXPublicKey(block.Bytes)
+
+	if err != nil {
+		return nil, nil, fmt.Errorf("Failed to parse RSA public key: %s", err)
+	}
+
+	rsaPub, ok := pub.(*rsa.PublicKey)
+
+	if !ok {
+		return nil, nil, fmt.Errorf("Value returned from ParsePKIXPublicKey was not an RSA public key")
+	}
+
+	block, _ = pem.Decode(privByte)
+	priv, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+
+	if err != nil {
+		return nil, nil, fmt.Errorf("Failed to parse RSA private key: %s", err)
+	}
+
+	return rsaPub, priv, nil
 }
 
 // 生成 RSA 密钥对 Pem
