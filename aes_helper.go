@@ -33,9 +33,27 @@ func AESEncrypt(key, plain []byte) ([]byte, error) {
 	return ciphertext, nil
 }
 
+// AESEncryptToString reutrn base64 chiphertext
+func AESEncryptToString(key, plain []byte) (string, error) {
+	ciphertext, err := AESEncrypt(key, plain)
+	if err != nil {
+		return "", err
+	}
+	return base64.StdEncoding.EncodeToString(ciphertext), nil
+}
+
+// AESDecryptString decrypt from base64 ciphertext
+func AESDecryptString(key []byte, ciphertext string) ([]byte, error) {
+	cb, err := base64.StdEncoding.DecodeString(ciphertext)
+	if err != nil {
+		return nil, err
+	}
+	return AESDecrypt(key, cb)
+}
+
 // AESAESDecrypt 解密函数
 // 加密密文的前 N 字节为动态生成的 IV
-func AESDecrypt(key, cipherText []byte) ([]byte, error) {
+func AESDecrypt(key, ciphertext []byte) ([]byte, error) {
 	if err := checkAESKeyLen(key); err != nil {
 		return nil, err
 	}
@@ -45,18 +63,18 @@ func AESDecrypt(key, cipherText []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	if len(cipherText) < aes.BlockSize {
+	if len(ciphertext) < aes.BlockSize {
 		return nil, errors.New("ciphertext too short")
 	}
-	iv := cipherText[:aes.BlockSize]
+	iv := ciphertext[:aes.BlockSize]
 
-	cipherText = cipherText[aes.BlockSize:]
+	ciphertext = ciphertext[aes.BlockSize:]
 
 	cfb := cipher.NewCFBDecrypter(block, iv)
 
-	cfb.XORKeyStream(cipherText, cipherText)
+	cfb.XORKeyStream(ciphertext, ciphertext)
 
-	data, err := base64.StdEncoding.DecodeString(string(cipherText))
+	data, err := base64.StdEncoding.DecodeString(string(ciphertext))
 	if err != nil {
 		return nil, err
 	}
