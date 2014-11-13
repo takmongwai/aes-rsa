@@ -1,4 +1,5 @@
 package crypto
+// AES 加密解密辅助包
 
 import (
 	"crypto/aes"
