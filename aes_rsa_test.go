@@ -12,7 +12,7 @@ var sigData = []byte("abcdefg1234567890")
 
 // AES 加密测试
 func TestAES(t *testing.T) {
-	t.SkipNow()
+
 	key := []byte("123456789012345678901234567890AA")
 
 	log.Println("原始明文:", string(plain))
@@ -36,11 +36,37 @@ func TestAES(t *testing.T) {
 	}
 }
 
+// 固定 IV AES 加密测试
+func TestAESFixedIV(t *testing.T) {
+	key := []byte("123456789012345678901234567890AA")
+	iv := []byte("1234567890123456")
+
+	log.Println("原始明文:", string(plain))
+
+	en, err := AESEncryptFixedIV(key, iv, plain)
+	if err != nil {
+		t.Fatal(err)
+	}
+	log.Println("密文:", en)
+
+	pn, err := AESDecryptFixedIV(key, iv, en)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	log.Println("解密明文:", string(pn))
+
+	if string(plain) != string(pn) {
+		t.Fatal("解密结果与明文不符")
+	}
+
+}
+
 // RSA 测试
 
 func TestRSA(t *testing.T) {
-	t.SkipNow()
-	publicKey, privateKey, err := GenRSAKey(768)
+	publicKey, privateKey, err := GenRSAKey(2048)
 
 	if err != nil {
 		t.Fatal(err)
@@ -105,18 +131,5 @@ func TestAREncrypt(t *testing.T) {
 	}
 
 	log.Printf("测试 %d 次加密/解密,耗时: %s \n", count, time.Now().Sub(s))
-
-	// en64, err := ar.EncryptToString(plain)
-//
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	log.Println("加密密文:", en64)
-//
-// 	p64p, err := ar.DecryptString(en64)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	log.Println("解密明文:", string(p64p))
 
 }
