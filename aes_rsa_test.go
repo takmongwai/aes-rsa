@@ -14,14 +14,14 @@ var sigData = []byte("abcdefg1234567890")
 func TestAES(t *testing.T) {
 
 	key := []byte("123456789012345678901234567890AA")
-
+	log.Println("动态 IV 测试")
 	log.Println("原始明文:", string(plain))
 
 	en, err := AESEncrypt(key, plain)
 	if err != nil {
 		t.Fatal(err)
 	}
-	log.Println("密文:", en)
+  // log.Println("密文:", en)
 
 	pn, err := AESDecrypt(key, en)
 
@@ -41,13 +41,14 @@ func TestAESFixedIV(t *testing.T) {
 	key := []byte("123456789012345678901234567890AA")
 	iv := []byte("1234567890123456")
 
+	log.Println("固定 IV 测试")
 	log.Println("原始明文:", string(plain))
 
 	en, err := AESEncryptFixedIV(key, iv, plain)
 	if err != nil {
 		t.Fatal(err)
 	}
-	log.Println("密文:", en)
+  // log.Println("密文:", en)
 
 	pn, err := AESDecryptFixedIV(key, iv, en)
 
@@ -76,7 +77,7 @@ func TestRSA(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	log.Println("RSA 加密密文", en)
+  // log.Println("RSA 加密密文", en)
 
 	pn, err := RSADecryptPKCS1v15(privateKey, en)
 

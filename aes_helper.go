@@ -108,10 +108,6 @@ func AESDecryptFixedIV(key, iv, ciphertext []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	if len(ciphertext) < aes.BlockSize {
-		return nil, errors.New("ciphertext too short")
-	}
-
 	cfb := cipher.NewCFBDecrypter(block, iv)
 
 	cfb.XORKeyStream(ciphertext, ciphertext)
